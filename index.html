@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IROFUSI 商品検索</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --text:#111111;
+    --muted:#555555;
+    --faint:#888888;
+    --base:#0f5779;
+    --base-dark:#0c4560;
+    --navy:#16255e;
+    --red:#cc2222;
+    --line:#e3e3e3;
+    --line-soft:#f0f0f0;
+    --panel:#f7f8f9;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:118px;
+  }
+
+  /* ---- header ---- */
+  header{
+    padding:22px 20px 18px;
+    border-bottom:2px solid var(--base);
+  }
+  .brand{
+    font-size:12px; letter-spacing:.36em; color:var(--base);
+    margin:0 0 6px; font-weight:700;
+  }
+  h1{ font-size:22px; margin:0; font-weight:900; letter-spacing:.04em; }
+  .snapshot{ font-size:11px; color:var(--faint); margin-top:8px; }
+
+  main{ max-width:660px; margin:0 auto; padding:0 16px; }
+
+  /* ---- stat bar ---- */
+  .stats{
+    display:flex; border:1px solid var(--line); border-radius:6px;
+    overflow:hidden; margin-top:18px; background:var(--panel);
+  }
+  .stat{ flex:1; padding:12px 8px; text-align:center; border-right:1px solid var(--line); }
+  .stat:last-child{ border-right:none; }
+  .stat .n{ font-size:26px; font-weight:900; line-height:1; }
+  .stat .n.navy{ color:var(--navy); }
+  .stat .n.base{ color:var(--base); }
+  .stat .n.red{ color:var(--red); }
+  .stat .l{ font-size:11px; color:var(--muted); margin-top:5px; font-weight:500; }
+
+  /* ---- controls ---- */
+  .controls{ margin-top:18px; }
+  .searchwrap{ position:relative; }
+  .searchwrap input{
+    width:100%; font-family:inherit; font-size:16px; font-weight:500;
+    padding:13px 42px 13px 14px; border:1px solid var(--line);
+    border-radius:6px; background:#fff; color:var(--text);
+  }
+  .searchwrap input:focus{ outline:none; border-color:var(--base); box-shadow:0 0 0 2px rgba(15,87,121,.15); }
+  .searchwrap .clear{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:none; background:transparent; color:var(--faint);
+    font-size:22px; padding:6px 10px; cursor:pointer; line-height:1;
+  }
+
+  .row{ display:flex; gap:10px; margin-top:11px; }
+  select{
+    flex:1; min-width:0; font-family:inherit; font-size:14px; font-weight:500;
+    padding:11px 34px 11px 12px; border:1px solid var(--line); border-radius:6px;
+    background:#fff; color:var(--text); appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%230f5779' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat:no-repeat; background-position:right 12px center;
+  }
+  select:focus{ outline:none; border-color:var(--base); }
+
+  .chips{ display:flex; gap:8px; margin-top:11px; }
+  .chip{
+    flex:1; font-family:inherit; font-size:13px; font-weight:700;
+    padding:9px 6px; border-radius:6px; cursor:pointer; text-align:center;
+    border:1px solid var(--line); background:#fff; color:var(--muted);
+    transition:all .12s ease;
+  }
+  .chip.on{ background:var(--base); color:#fff; border-color:var(--base); }
+
+  /* ---- result meta ---- */
+  .resultmeta{
+    margin-top:22px; padding-bottom:8px; border-bottom:2px solid var(--text);
+  }
+  .resultmeta .count{ font-size:14px; font-weight:700; }
+  .resultmeta .count b{ font-size:20px; color:var(--base); margin:0 3px; }
+
+  /* ---- list ---- */
+  ul.list{ list-style:none; margin:0; padding:0; }
+  li.item{
+    padding:13px 2px; border-bottom:1px solid var(--line-soft);
+    display:flex; align-items:flex-start; gap:11px;
+  }
+  li.item .idx{
+    font-size:12px; color:var(--faint); min-width:26px; padding-top:3px;
+    font-variant-numeric:tabular-nums; font-weight:500;
+  }
+  li.item .body{ flex:1; min-width:0; }
+  li.item .name{ font-size:14.5px; font-weight:500; line-height:1.5; word-break:break-word; }
+  li.item .meta{ display:flex; align-items:center; gap:10px; margin-top:5px; flex-wrap:wrap; }
+  li.item .price{ font-size:15px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  li.item .price.sold{ color:var(--red); font-size:13px; font-weight:700; }
+  li.item .pg{ font-size:10.5px; color:var(--faint); }
+  li.item .actions{ display:flex; gap:6px; }
+  .iconbtn{
+    border:1px solid var(--base); background:#fff; color:var(--base);
+    font-family:inherit; font-size:11.5px; font-weight:700; padding:6px 11px;
+    border-radius:5px; cursor:pointer; white-space:nowrap; text-decoration:none;
+    display:inline-block;
+  }
+  .iconbtn:active,.iconbtn.copied{ background:var(--base); color:#fff; }
+
+  .empty{ text-align:center; padding:48px 20px; }
+  .empty .mark{ font-size:34px; font-weight:900; color:var(--line); display:block; margin-bottom:12px; }
+  .empty .msg{ font-size:15px; font-weight:700; color:var(--text); }
+  .empty .sub{ font-size:12.5px; color:var(--faint); margin-top:8px; }
+
+  /* ---- refresh panel ---- */
+  details.refresh{ margin-top:16px; border:1.5px solid var(--base); border-radius:6px; background:#fff; overflow:hidden; }
+  details.refresh summary{
+    padding:13px 14px; font-size:13.5px; font-weight:700; color:#fff; cursor:pointer;
+    background:var(--base); list-style:none; display:flex; align-items:center; gap:8px;
+  }
+  details.refresh summary::-webkit-details-marker{ display:none; }
+  .rsum-ic{ font-size:15px; line-height:1; }
+  .rsum-tag{
+    margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.06em;
+    background:rgba(255,255,255,.22); padding:2px 9px; border-radius:20px;
+  }
+  details.refresh[open] summary{ border-bottom:1px solid var(--base-dark); }
+  details.refresh .rbody{ padding:14px; }
+  details.refresh p{ font-size:12px; color:var(--muted); margin:0 0 10px; line-height:1.7; }
+  details.refresh textarea{
+    width:100%; font-family:inherit; font-size:13px; padding:10px;
+    border:1px solid var(--line); border-radius:6px; background:#fff;
+    resize:vertical; min-height:110px; color:var(--text);
+  }
+  .rrow{ display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap; }
+  .rrow input[type=number]{
+    width:64px; font-family:inherit; font-size:16px; padding:8px;
+    border:1px solid var(--line); border-radius:6px; background:#fff;
+  }
+  .status{ font-size:12px; margin-top:10px; padding:8px 10px; border-radius:5px; line-height:1.6; }
+  .status.ok{ background:#e4f0ee; color:#0c4560; }
+  .status.err{ background:#fbe6e6; color:var(--red); }
+  .status.info{ background:#eef0f2; color:var(--muted); }
+
+  /* ---- footer action bar ---- */
+  .actionbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:20;
+    background:#fff; border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:9px; align-items:center;
+    box-shadow:0 -2px 10px rgba(0,0,0,.04);
+  }
+  .actionbar select{
+    flex:1; font-size:13.5px; padding:12px 32px 12px 12px;
+  }
+  .actionbar button{
+    font-family:inherit; font-size:14px; font-weight:700; letter-spacing:.02em;
+    padding:12px 18px; border-radius:6px; border:none; cursor:pointer;
+    background:var(--base); color:#fff; white-space:nowrap;
+  }
+  .actionbar button:active{ background:var(--base-dark); }
+  .toast{
+    position:fixed; left:50%; bottom:80px; transform:translateX(-50%) translateY(20px);
+    background:var(--base); color:#fff; padding:11px 20px; border-radius:6px;
+    font-size:13px; font-weight:700; opacity:0; pointer-events:none;
+    transition:all .25s ease; z-index:30; box-shadow:0 4px 16px rgba(0,0,0,.2);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">I R O F U S I</div>
+  <h1>商品検索</h1>
+  <div class="snapshot" id="snapshot"></div>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="n navy" id="statAll">0</div><div class="l">総掲載数</div></div>
+    <div class="stat"><div class="n base" id="statStock">0</div><div class="l">在庫あり</div></div>
+    <div class="stat"><div class="n red" id="statSold">0</div><div class="l">sold out</div></div>
+  </div>
+
+  <details class="refresh">
+    <summary><span class="rsum-ic">↻</span>データを最新に更新する<span class="rsum-tag">任意</span></summary>
+    <div class="rbody">
+      <p>内蔵データは取得時点のものです。最新にしたい場合は、スマホのブラウザで irofusi.shop の各ページを開き、商品一覧の部分を選択・コピーして下に貼り付け、ページ番号を入れて「取り込む」を押してください。商品名・価格・sold out を認識して置き換えます(リンクは付きません)。</p>
+      <textarea id="pasteArea" placeholder="ここにページの商品一覧を貼り付け"></textarea>
+      <div class="rrow">
+        <span style="font-size:12px;color:var(--muted);">ページ番号</span>
+        <input type="number" id="pastePage" value="1" min="1">
+        <button class="iconbtn" id="importBtn">このページを取り込む</button>
+        <button class="iconbtn" id="restoreBtn">内蔵データに戻す</button>
+      </div>
+      <div id="importStatus"></div>
+    </div>
+  </details>
+
+  <div class="controls">
+    <div class="searchwrap">
+      <input type="text" id="search" placeholder="商品名で検索(例:藍墨 / 東雲 / ストール)" autocomplete="off">
+      <button class="clear" id="clearSearch" aria-label="クリア">×</button>
+    </div>
+    <div class="row">
+      <select id="sort">
+        <option value="page">並び替え:掲載順</option>
+        <option value="priceDesc">価格が高い順</option>
+        <option value="priceAsc">価格が安い順</option>
+        <option value="name">名前順(五十音)</option>
+      </select>
+    </div>
+    <div class="chips">
+      <button class="chip on" data-avail="all">すべて</button>
+      <button class="chip" data-avail="stock">在庫ありのみ</button>
+      <button class="chip" data-avail="sold">sold outのみ</button>
+    </div>
+  </div>
+
+  <div class="resultmeta">
+    <div class="count">該当 <b id="resultCount">0</b> 点</div>
+  </div>
+
+  <ul class="list" id="list"></ul>
+</main>
+
+<div class="actionbar">
+  <select id="copyFormat">
+    <option value="namePrice">名前 + 価格</option>
+    <option value="name">名前のみ</option>
+  </select>
+  <button id="copyAllBtn">表示中をコピー</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE_DATA = [{"name": "藍墨下グラデ紐シャーリングスカート", "price": 42900, "url": "https://irofusi.shop/items/6a3d1571e88e8137cb2460be", "page": 1}, {"name": "墨染 ボイル纏-matoi-カーディガン", "price": 37400, "url": "https://irofusi.shop/items/6a3d14ffe88e813c52246012", "page": 1}, {"name": "黒遊藍コットン羽織カーディガン", "price": null, "url": "https://irofusi.shop/items/6a3d14d381cb293656a9d774", "page": 1}, {"name": "黒遊藍 ボイル纏-matoi-カーディガン", "price": 39600, "url": "https://irofusi.shop/items/6a3513bf9d5f2b14adabadc6", "page": 1}, {"name": "藍墨 幻氷 ボイル纏-matoi-カーディガン", "price": 46200, "url": "https://irofusi.shop/items/6a351130d37d851549d54244", "page": 1}, {"name": "黒遊藍 東雲ワンピース半袖", "price": 48400, "url": "https://irofusi.shop/items/6a354b8ee3d9a47d20f4ece7", "page": 1}, {"name": "斜幻氷-genpyou-東雲ワンピース半袖", "price": 68200, "url": "https://irofusi.shop/items/6a354fd5c232b0911cb35f06", "page": 1}, {"name": "黒遊藍コットン四角ベスト", "price": 29700, "url": "https://irofusi.shop/items/6a26342f95624d5182b4cf78", "page": 1}, {"name": "遊墨コットン四角ベスト", "price": 29700, "url": "https://irofusi.shop/items/66e2a78e6d07c10336de2ebe", "page": 1}, {"name": "黒遊藍断切天竺ワイドパンツ", "price": 49500, "url": "https://irofusi.shop/items/6a1faf78044f893ee6ba9db2", "page": 1}, {"name": "黒 秋霖 -syurin- カットソー5分袖", "price": 12100, "url": "https://irofusi.shop/items/66b22b40dacada052241e088", "page": 1}, {"name": "新 黒コットン二重四角スカート", "price": 34100, "url": "https://irofusi.shop/items/6a3536991d3bd9152d8c9f67", "page": 1}, {"name": "藍墨斜上グラデコットンスタンドロングシャツ", "price": 49500, "url": "https://irofusi.shop/items/6a3535cf1d3bd9152d8c9f0e", "page": 1}, {"name": "藍墨幻氷-genpyou-コットン羽織カーディガン", "price": null, "url": "https://irofusi.shop/items/6a353430ea71f306d3bf2f53", "page": 1}, {"name": "黒藍上グラデ東雲ワンピース長袖", "price": null, "url": "https://irofusi.shop/items/6a2ad7b4b69459e22945a864", "page": 1}, {"name": "藍墨幻氷天泣バルーンスカート", "price": null, "url": "https://irofusi.shop/items/6a2ad786b69459e22945a855", "page": 1}, {"name": "黒 ボイル纏-matoi-カーディガン", "price": 31900, "url": "https://irofusi.shop/items/6a2ad757e6335dde958faa97", "page": 1}, {"name": "藍墨下幻氷-genpyou-東雲ワンピース半袖", "price": null, "url": "https://irofusi.shop/items/69be29c46d097bebabc03b04", "page": 1}, {"name": "藍墨-aizumi- 天泣ショートコーディガン", "price": 71500, "url": "https://irofusi.shop/items/69be07052d6e83c1242787fd", "page": 1}, {"name": "黒藍グラデ天泣ロングコーディガン", "price": 71500, "url": "https://irofusi.shop/items/69be02d9963734a780016c48", "page": 1}, {"name": "天泣-tenkyu-ロングコーディガン", "price": 71500, "url": "https://irofusi.shop/items/61225c8746e30e29875b8707", "page": 1}, {"name": "墨染タートル秋霖カットソー", "price": 19800, "url": "https://irofusi.shop/items/694134b922a0b83ac6d05d62", "page": 1}, {"name": "遊墨 秋霖 天竺カットソー長袖", "price": 22000, "url": "https://irofusi.shop/items/66dc14e2f30db24e0e42a750", "page": 1}, {"name": "墨染天泣裾タックワイドパンツ", "price": 39600, "url": "https://irofusi.shop/items/6846a7bc3dae62571a9b776b", "page": 1}, {"name": "ふくれジャガードボトルネックジャケット", "price": null, "url": "https://irofusi.shop/items/63a9109b940f3d1d5494cb72", "page": 1}, {"name": "藍墨秋霖 -syurin- カットソー長袖", "price": 18700, "url": "https://irofusi.shop/items/654b254c6cb14b002c6f889d", "page": 1}, {"name": "遊墨コットン二重四角スカート", "price": 39600, "url": "https://irofusi.shop/items/6548d75a6c8af603e8a4374a", "page": 1}, {"name": "黒 秋霖 -syurin- カットソー長袖", "price": 13200, "url": "https://irofusi.shop/items/66b228fadacada048b41e138", "page": 1}, {"name": "秋霖 -syurin- カットソー長袖", "price": 16500, "url": "https://irofusi.shop/items/6549b3f3bfa2870030ccd07e", "page": 1}, {"name": "藍墨日輪東雲長袖ワンピース", "price": 46200, "url": "https://irofusi.shop/items/641ab012e7d7220030b38b6b", "page": 1}, {"name": "遊墨-youboku-東雲長袖ワンピース", "price": 46200, "url": "https://irofusi.shop/items/612ba816e50c0b5bbf127522", "page": 2}, {"name": "薄 墨染コットン纏-matoi-カーディガン", "price": null, "url": "https://irofusi.shop/items/66cb25e52ead3726f8245166", "page": 2}, {"name": "遊墨コットン纏-matoi-カーディガン", "price": 39600, "url": "https://irofusi.shop/items/6610ffc33afb9c43e785fb78", "page": 2}, {"name": "黒東雲ワンピース長袖", "price": 35200, "url": "https://irofusi.shop/items/6057276a9dbfee2ef64a3869", "page": 2}, {"name": "藍墨 東雲ワンピース長袖", "price": 46200, "url": "https://irofusi.shop/items/5feae48c72eb46625c6d8f4d", "page": 2}, {"name": "藍墨 -aizumi-天泣ロングコーディガン", "price": 73900, "url": "https://irofusi.shop/items/63a912a9d5ffeb72d1446e20", "page": 2}, {"name": "黒 鼯-musasabi-サルエルパンツ", "price": 37400, "url": "https://irofusi.shop/items/6541dbb6471cb301a7142bfc", "page": 2}, {"name": "タートル藍墨秋霖カットソー", "price": 23100, "url": "https://irofusi.shop/items/69461f5459d79808fb82dd8c", "page": 2}, {"name": "天泣 -tenkyu- バルーンスカート", "price": 39600, "url": "https://irofusi.shop/items/5cb9db22a89452716f278bfd", "page": 2}, {"name": "藍墨秋霖 -syurin- カットソー5分袖", "price": 17600, "url": "https://irofusi.shop/items/6548daf6b4efa2051cd82d89", "page": 2}, {"name": "断切天竺黒ワイドパンツ", "price": 34100, "url": "https://irofusi.shop/items/694955df1435c1050fb1f695", "page": 2}, {"name": "遊墨タートル秋霖カットソー", "price": 25300, "url": "https://irofusi.shop/items/695756d75f2118c8bec0b3ba", "page": 2}, {"name": "黒藍上グラデロングドロップシャツ", "price": null, "url": "https://irofusi.shop/items/69931500468379d88a53957f", "page": 2}, {"name": "遊墨コットン羽爵 -ushaku- カーディガン", "price": 41800, "url": "https://irofusi.shop/items/6721cf43f09fa003322c1e92", "page": 2}, {"name": "遊墨 秋霖 -syurin- カットソー5分袖", "price": 20900, "url": "https://irofusi.shop/items/66b22ee2c3470205d9fd805c", "page": 2}, {"name": "遊墨コットン羽織カーディガン", "price": 35200, "url": "https://irofusi.shop/items/671b5fb3bf7b8f01fc47125e", "page": 2}, {"name": "藍墨 日輪東雲ワンピース半袖", "price": 45100, "url": "https://irofusi.shop/items/64b24522e8c4f80032e35f26", "page": 2}, {"name": "遊墨 秋霖ワイド天竺カットソー半袖", "price": null, "url": "https://irofusi.shop/items/66c5df29b4ac7407b650fb81", "page": 2}, {"name": "斑糸 裾タックワイドパンツ", "price": 39600, "url": "https://irofusi.shop/items/64f34e9e401c310816e66244", "page": 2}, {"name": "秋霖 -syu-rin- カットソー5分袖", "price": 15400, "url": "https://irofusi.shop/items/5e907bc5e20b04390031dd76", "page": 2}, {"name": "東雲 -shinonome- ワンピース半袖", "price": 39600, "url": "https://irofusi.shop/items/5e907ccee20b0474c331e1dc", "page": 2}, {"name": "墨染天泣立襟プレーンワンピース", "price": 53900, "url": "https://irofusi.shop/items/696f8d1ef0a6afefb311b0e9", "page": 2}, {"name": "黒ウール裏毛断切ロングコーディガン", "price": 97900, "url": "https://irofusi.shop/items/696f6e4e66372a0e95c8a028", "page": 2}, {"name": "二重毛織断切黒ロングコーディガン", "price": 97900, "url": "https://irofusi.shop/items/69575cad4e941cd24c73b5c1", "page": 2}, {"name": "氷影-hyouei-エコウールロングコーディガン", "price": 86900, "url": "https://irofusi.shop/items/69461ca985f9346bb0851e2a", "page": 2}, {"name": "黒ウール手繰りノースリワンピース", "price": 64900, "url": "https://irofusi.shop/items/69575a14dacadafac0d8216f", "page": 2}, {"name": "断切 藍墨 日輪 傾斜ウールストール", "price": 26400, "url": "https://irofusi.shop/items/6548d4fe6c8af603e8a4367d", "page": 2}, {"name": "断切 遊墨 傾斜ウールストール", "price": 24200, "url": "https://irofusi.shop/items/6548dcb8380c3d02860e6ca7", "page": 2}, {"name": "断切 鈍色 傾斜ウールストール", "price": 19800, "url": "https://irofusi.shop/items/6548dbf314b0df057bc2f2b7", "page": 2}, {"name": "濡羽-nureba-エコウール裾タックワイドパンツ", "price": 42900, "url": "https://irofusi.shop/items/69464a73006ad1bbca0d18a2", "page": 2}, {"name": "氷影-hyouei-エコウールワイドパンツ", "price": 51700, "url": "https://irofusi.shop/items/693b6d823ee3fd6e89abe23e", "page": 3}, {"name": "濡羽-nureba-エコウールワイドパンツ", "price": 39600, "url": "https://irofusi.shop/items/692ea221c4153fd2e4d5d4a7", "page": 3}, {"name": "断切天竺墨染ワイドパンツ", "price": null, "url": "https://irofusi.shop/items/694955296857f8df9eacda6f", "page": 3}, {"name": "断切遊墨ウール四角カーディガン", "price": 39600, "url": "https://irofusi.shop/items/6548dce714b0df04b9c2f675", "page": 3}, {"name": "断切墨染ウール四角カーディガン", "price": 35200, "url": "https://irofusi.shop/items/63a9258d2cdd54630d326986", "page": 3}, {"name": "氷影-hyouei-エコウールショートコーディガン", "price": 75900, "url": "https://irofusi.shop/items/6978c82d434b950c52ecf1e7", "page": 3}, {"name": "氷影-hyouei-エコウールフードショートコート", "price": 64900, "url": "https://irofusi.shop/items/6992faa23e68ea2a0eb6d9c6", "page": 3}, {"name": "麹塵-kikujin-エコウールショートコーディガン", "price": 53900, "url": "https://irofusi.shop/items/63a91f318a9b1b7d5124e9f5", "page": 3}, {"name": "濡羽-nureba- エコウールショートコーディガン", "price": 53900, "url": "https://irofusi.shop/items/63a91b4b2cdd546301326b1a", "page": 3}, {"name": "柵ウール縫合ワンピース", "price": 64900, "url": "https://irofusi.shop/items/696f8e8e3cea4af9a0c25ada", "page": 3}, {"name": "遊墨ウール東雲長袖ワンピース", "price": 59400, "url": "https://irofusi.shop/items/641aa9aed356f7002b719466", "page": 3}, {"name": "藍墨日輪ウール東雲ワンピース長袖", "price": 59400, "url": "https://irofusi.shop/items/6548cc8614b0df057bc2f0fd", "page": 3}, {"name": "黒ウール東雲ワンピース長袖", "price": 49500, "url": "https://irofusi.shop/items/6548ce636c8af6002da44b4a", "page": 3}, {"name": "断切藍墨 日輪ウール四角カーディガン", "price": 42900, "url": "https://irofusi.shop/items/6548d458b4efa204c5d82b0c", "page": 3}, {"name": "鈍色ブークレ断切ショートコーディガン", "price": 73900, "url": "https://irofusi.shop/items/69931932468379fda7539598", "page": 3}, {"name": "断切鈍色ウール四角カーディガン", "price": 29700, "url": "https://irofusi.shop/items/63a926623463e77288cc98fe", "page": 3}, {"name": "麴塵-kikujin-エコウール総裏トレンチ", "price": 86900, "url": "https://irofusi.shop/items/6544dd75d917111dc05d988f", "page": 3}, {"name": "黒ウール羽爵カーディガン", "price": 42900, "url": "https://irofusi.shop/items/6548d28cb4efa204c5d82a72", "page": 3}, {"name": "麹塵-kikujin-エコウールロングコーディガン", "price": 64900, "url": "https://irofusi.shop/items/61c2d069ecd057444b5bea10", "page": 3}, {"name": "濡羽-nureba- エコウールロングコーディガン", "price": 64900, "url": "https://irofusi.shop/items/63a91a53c66d665cb13adc72", "page": 3}, {"name": "墨染 鼯-musasabi-サルエルパンツ", "price": null, "url": "https://irofusi.shop/items/6541dbf1cd92fe0032d5b596", "page": 3}, {"name": "天泣 - tenkyu - ワイドパンツ", "price": null, "url": "https://irofusi.shop/items/605ea617d263f07c5cf0624a", "page": 3}, {"name": "墨染 秋霖 -syurin- ノースリカットソー", "price": 14300, "url": "https://irofusi.shop/items/66b22c46dacada052241e0f0", "page": 3}, {"name": "黒綿麻 東雲ワンピース長袖", "price": null, "url": "https://irofusi.shop/items/6548cd0d14b0df0454c2f6bd", "page": 3}, {"name": "岩漿-gansho-遊墨コットン二重四角スカート", "price": 42900, "url": "https://irofusi.shop/items/662bb22e15680f0e454c4258", "page": 3}, {"name": "墨染コットン二重四角スカート", "price": 35200, "url": "https://irofusi.shop/items/64af9c3786f8d4002fc9753f", "page": 3}, {"name": "斑糸ワイドパンツ", "price": null, "url": "https://irofusi.shop/items/64f350c2e4567c0047a6c34c", "page": 3}, {"name": "黒コットン二重四角スカート", "price": null, "url": "https://irofusi.shop/items/64f34c21401c310033e68132", "page": 3}, {"name": "藍墨日輪コットン羽織カーディガン", "price": 35200, "url": "https://irofusi.shop/items/66b5f807e04d4501917b2db9", "page": 3}, {"name": "遊墨-youboku-コットンドロップシャツ", "price": null, "url": "https://irofusi.shop/items/612baaaea92a781bd71caaee", "page": 3}, {"name": "黒綿麻メンズショールカーディガン", "price": null, "url": "https://irofusi.shop/items/6548cb55c3470204362d615d", "page": 4}, {"name": "斑糸メンズショールカーディガン", "price": null, "url": "https://irofusi.shop/items/613e02f98c1a5b6ee2994953", "page": 4}, {"name": "遊墨コットンチュニックブラウス", "price": null, "url": "https://irofusi.shop/items/66cf14dadfae5d051b8a30ea", "page": 4}, {"name": "藍墨日輪チュニックブラウス", "price": null, "url": "https://irofusi.shop/items/66e452c0393dc3021734774f", "page": 4}, {"name": "藍墨 東雲ワンピース半袖", "price": 45100, "url": "https://irofusi.shop/items/605ea820baeb3a344bf0bf39", "page": 4}, {"name": "墨染 紐シャーリングスカート", "price": null, "url": "https://irofusi.shop/items/66dc148ff30db24e0e42a73c", "page": 4}, {"name": "藍墨コットン日輪ドロップシャツ", "price": 39600, "url": "https://irofusi.shop/items/66e2a0b6f6cbf001dcfe6225", "page": 4}, {"name": "藍墨コットン纏-matoi-カーディガン", "price": 39600, "url": "https://irofusi.shop/items/66f612dbe5f041039491f3d0", "page": 4}, {"name": "遊墨コットン天竺纏-matoi-カーディガン", "price": null, "url": "https://irofusi.shop/items/66ecf7c82358c602527a42c9", "page": 4}, {"name": "黒 天泣ロングコーディガン", "price": 59400, "url": "https://irofusi.shop/items/65489fdda2eab2002d669aaa", "page": 4}, {"name": "フロス遊墨-youboku-バルーンスカート", "price": null, "url": "https://irofusi.shop/items/6623a17a56efca002d9790ef", "page": 4}, {"name": "二重シワ加工セーター", "price": null, "url": "https://irofusi.shop/items/5feae325b00aa32d29a40d0e", "page": 4}, {"name": "フロス遊墨ロングコーディガン", "price": null, "url": "https://irofusi.shop/items/661dc79a1435c11d49e17f65", "page": 4}, {"name": "墨染 秋霖ワイドカットソー半袖", "price": 19800, "url": "https://irofusi.shop/items/66e2a0fff19c230212e15d82", "page": 4}, {"name": "岩漿-gansho-遊墨コットンドロップシャツ", "price": 42900, "url": "https://irofusi.shop/items/671f4f4851afd1035f67ec22", "page": 4}, {"name": "岩漿-gansho-遊墨ロングドロップシャツ", "price": 46200, "url": "https://irofusi.shop/items/671253c0c4153f0e5870655f", "page": 4}, {"name": "遊墨 天竺ロングカットソー長袖", "price": null, "url": "https://irofusi.shop/items/66b227224f4ab6057eadcf21", "page": 4}, {"name": "東雲 -shinonome- ワンピース長袖", "price": 41700, "url": "https://irofusi.shop/items/5e8b40f5e20b043a7a063566", "page": 4}, {"name": "遊墨鼯-musasabi-サルエルパンツ", "price": null, "url": "https://irofusi.shop/items/6712549f3cc7cf05db72953b", "page": 4}, {"name": "藍墨 鼯-musasabi-サルエルパンツ", "price": null, "url": "https://irofusi.shop/items/66ecf83039cb4e0257c71864", "page": 4}, {"name": "天泣ワイドロングトレンチコート", "price": 64900, "url": "https://irofusi.shop/items/6419839de4567c00676a8245", "page": 4}, {"name": "墨染チュニックブラウス", "price": 42900, "url": "https://irofusi.shop/items/671b61c8bf7b8f0220471254", "page": 4}, {"name": "藍墨コットンチュニックブラウス", "price": null, "url": "https://irofusi.shop/items/6712600c27582901627909ee", "page": 4}, {"name": "朧染 -oborozome- ストール", "price": null, "url": "https://irofusi.shop/items/5e8f40c3e20b0465a731de20", "page": 4}, {"name": "交差 -kousa- ストール", "price": null, "url": "https://irofusi.shop/items/5e8f4083e20b044ebb31deb0", "page": 4}, {"name": "雨晴 -amabare- ストール", "price": 15400, "url": "https://irofusi.shop/items/5e8f404e9df16351f4ba8892", "page": 4}, {"name": "藍媚茶-aikobicha-ワイドロングトレンチコート", "price": null, "url": "https://irofusi.shop/items/64af982186f8d4002fc971a3", "page": 4}, {"name": "黒綿麻ワイドロングトレンチコート", "price": null, "url": "https://irofusi.shop/items/65489a382ce5f6002f22db07", "page": 4}, {"name": "遊墨-yuuboku-タートルセーター", "price": null, "url": "https://irofusi.shop/items/63a9519d940f3d527231e99c", "page": 4}, {"name": "鈍色-nibiiro- エコウールロングコーディガン", "price": null, "url": "https://irofusi.shop/items/63a952308a9b1b4ebdc33b82", "page": 4}, {"name": "滅紫-keshimurasaki-エコウールロングコーディガン", "price": null, "url": "https://irofusi.shop/items/61d849e9110dda741789b305", "page": 5}, {"name": "鈍色ウールロングドロップシャツ", "price": null, "url": "https://irofusi.shop/items/63a961682cdd54339ac658d8", "page": 5}, {"name": "滅紫-keshimurasaki-エコウールショートコーディガン", "price": null, "url": "https://irofusi.shop/items/64aff1ce2688ed00339d0a06", "page": 5}, {"name": "フロス遊墨ショートコーディガン", "price": null, "url": "https://irofusi.shop/items/6630e5fd6891190b16f40727", "page": 5}, {"name": "黒三角藍墨染切替セーター", "price": null, "url": "https://irofusi.shop/items/63a94faec36dbe41cb8949ed", "page": 5}, {"name": "三角 墨染 切替セーター", "price": null, "url": "https://irofusi.shop/items/5feae342f0b108251a7fcf91", "page": 5}, {"name": "藍墨コットンクラシックワンピース", "price": null, "url": "https://irofusi.shop/items/66ecf7fef30db2022d5d269f", "page": 5}, {"name": "墨染コットンクラシックワンピース", "price": null, "url": "https://irofusi.shop/items/66f6158be5f04104ad91fb57", "page": 5}, {"name": "岩漿-gansho-遊墨コットンクラシックワンピース", "price": 46200, "url": "https://irofusi.shop/items/671b5e175db91401583ccfd0", "page": 5}, {"name": "上日雷 藍墨ロングカットソー長袖", "price": null, "url": "https://irofusi.shop/items/66b227f0b4ac7405b0a8423e", "page": 5}, {"name": "遊墨 天竺ロングカットソー半袖", "price": null, "url": "https://irofusi.shop/items/66b22682b4ac74052da843c2", "page": 5}, {"name": "黒 秋霖ワイドカットソー半袖", "price": null, "url": "https://irofusi.shop/items/66b224f9dacada03af41e0f3", "page": 5}, {"name": "上日雷 藍墨ロングカットソー半袖", "price": null, "url": "https://irofusi.shop/items/66b227b6c347020591fd7f7f", "page": 5}, {"name": "黒 秋霖 -syurin- ノースリカットソー", "price": 9900, "url": "https://irofusi.shop/items/66b229944f4ab6060cadceaf", "page": 5}, {"name": "秋霖 -syu-rin- カットソー半袖", "price": 15400, "url": "https://irofusi.shop/items/66b22ced1ef43006e1f0c03c", "page": 5}, {"name": "藍墨コットングラデ羽爵 -ushaku- カーディガン", "price": null, "url": "https://irofusi.shop/items/66e28b66c3d7cd0569ca54cd", "page": 5}, {"name": "羽爵 -ushaku- カーディガン", "price": null, "url": "https://irofusi.shop/items/5e8a13472a9a422d51ee82de", "page": 5}, {"name": "墨染コットン羽織カーディガン", "price": null, "url": "https://irofusi.shop/items/66dc157efe9260245388832c", "page": 5}, {"name": "藍墨 紐シャーリングスカート", "price": null, "url": "https://irofusi.shop/items/66bb4d921b56ba01215d195f", "page": 5}, {"name": "岩漿-gansho-遊墨 東雲ワンピース半袖", "price": 45100, "url": "https://irofusi.shop/items/662273420f4efd0bcff919b0", "page": 5}, {"name": "コットン遊墨ストール", "price": 17600, "url": "https://irofusi.shop/items/66b5f7ca4c088e01d8fa3674", "page": 5}, {"name": "遊墨 紐シャーリングスカート", "price": null, "url": "https://irofusi.shop/items/66e452306c5f9e0aa4566582", "page": 5}, {"name": "黒 紐シャーリングスカート", "price": null, "url": "https://irofusi.shop/items/66b21980941bd6042ea599b0", "page": 5}, {"name": "遊墨-youboku-東雲半袖ワンピース", "price": 45100, "url": "https://irofusi.shop/items/612ba34b20239709047a75a0", "page": 5}, {"name": "藍墨 上グラデ東雲ワンピース半袖", "price": null, "url": "https://irofusi.shop/items/64b24d3bdb24c419a808d100", "page": 5}, {"name": "斑糸-muraito-アシメプルオーバー", "price": null, "url": "https://irofusi.shop/items/654a2ae34e11f1050ee795d1", "page": 5}, {"name": "遊墨-youboku-クラシックブラウス", "price": 39600, "url": "https://irofusi.shop/items/6548da0114b0df057bc2f27e", "page": 5}, {"name": "藍墨コットンクラシックブラウス", "price": 39600, "url": "https://irofusi.shop/items/6548da666c8af6050ca43560", "page": 5}, {"name": "藍墨コットン二重四角スカート", "price": 39600, "url": "https://irofusi.shop/items/64afa7f43cc552002f15e7a8", "page": 5}, {"name": "黒東雲ワンピース半袖", "price": 34100, "url": "https://irofusi.shop/items/612261fe2b2d3d4e57d48157", "page": 5}, {"name": "黒綿麻 縄ベルトサルエルパンツ", "price": null, "url": "https://irofusi.shop/items/64af9aef5106c2002d14874c", "page": 6}, {"name": "藍墨シャーリングワンピース", "price": null, "url": "https://irofusi.shop/items/605727c0fda360759d324a94", "page": 6}, {"name": "シャーリングワンピース", "price": null, "url": "https://irofusi.shop/items/5e8c88502a9a4248ec47360f", "page": 6}, {"name": "藍墨 纏-matoi-カーディガン", "price": null, "url": "https://irofusi.shop/items/64f1d3d68ab3cb0031cf94ff", "page": 6}, {"name": "新藍墨コットンロングドロップシャツ", "price": 46200, "url": "https://irofusi.shop/items/6134d0feedf49f13b7a21d0c", "page": 6}, {"name": "遊墨コットンロングドロップシャツ", "price": 46200, "url": "https://irofusi.shop/items/64b246ff90253300358a3a7e", "page": 6}, {"name": "墨染コットンロングドロップシャツ", "price": 35200, "url": "https://irofusi.shop/items/6134d14e784e3f3a1462df61", "page": 6}, {"name": "墨染コットンクラシックブラウス", "price": 34100, "url": "https://irofusi.shop/items/6548da30a2eab2086466991e", "page": 6}, {"name": "黒 天泣ショートコーディガン", "price": null, "url": "https://irofusi.shop/items/6548a055f0a6af0198dc6ba5", "page": 6}, {"name": "藍墨-aizumi- ふくれジャガードボトルネックジャケット", "price": null, "url": "https://irofusi.shop/items/63a911d2679de774970fac83", "page": 6}, {"name": "藍墨羽爵 -ushaku- カーディガン", "price": null, "url": "https://irofusi.shop/items/605727a2a11abc37764985d4", "page": 6}, {"name": "黒綿麻フードコーディガン", "price": null, "url": "https://irofusi.shop/items/64af9a0dc60d690036bb114c", "page": 6}, {"name": "黒コットンロングドロップシャツ", "price": null, "url": "https://irofusi.shop/items/6134d19d8c1a5b7a2feee150", "page": 6}, {"name": "遊墨ウール一重羽爵カーディガン", "price": null, "url": "https://irofusi.shop/items/641aaa9075fe89003d22720c", "page": 6}, {"name": "斑糸-muraito-ワイドロングトレンチ", "price": 69300, "url": "https://irofusi.shop/items/641acaed874c890041db2d03", "page": 6}, {"name": "藍媚茶-aikobicha-綿麻フードコーディガン", "price": null, "url": "https://irofusi.shop/items/641aabb12358c60028b86089", "page": 6}, {"name": "鈍色-nibiiro-エコウールショートコーディガン", "price": null, "url": "https://irofusi.shop/items/654b26847c149e002e49b644", "page": 6}, {"name": "濡羽ウールロングドロップシャツ", "price": null, "url": "https://irofusi.shop/items/6548d65314b0df0888c2ef1e", "page": 6}, {"name": "藍墨-aizumi-タートルセーター", "price": null, "url": "https://irofusi.shop/items/641ac8ae874c89003bdb449d", "page": 6}];
+const SNAPSHOT_DATE = "2026-07-01";
+const OVERRIDE_KEY = "irofusi-search-override-v2";
+
+let products = BASE_DATA.slice();
+let state = { q:"", sort:"page", avail:"all" };
+
+async function loadOverride(){
+  try{
+    const res = await window.storage.get(OVERRIDE_KEY);
+    if(res && res.value){
+      const arr = JSON.parse(res.value);
+      if(Array.isArray(arr) && arr.length){ products = arr; }
+    }
+  }catch(e){}
+}
+async function saveOverride(){ try{ await window.storage.set(OVERRIDE_KEY, JSON.stringify(products)); }catch(e){} }
+async function clearOverride(){ try{ await window.storage.delete(OVERRIDE_KEY); }catch(e){} }
+
+function yen(n){ return "¥" + n.toLocaleString("ja-JP"); }
+function priceLabel(p){ return p.price === null ? "sold out" : yen(p.price); }
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function getFiltered(){
+  const q = state.q.trim().toLowerCase();
+  let arr = products.filter(p => {
+    if(state.avail === "stock" && p.price === null) return false;
+    if(state.avail === "sold" && p.price !== null) return false;
+    if(q && !p.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const s = state.sort;
+  arr.sort((a,b) => {
+    if(s === "priceDesc"){ return (b.price??-1) - (a.price??-1); }
+    if(s === "priceAsc"){ return (a.price??Infinity) - (b.price??Infinity); }
+    if(s === "name"){ return a.name.localeCompare(b.name, "ja"); }
+    return (a.page - b.page);
+  });
+  return arr;
+}
+
+function renderStats(){
+  const all = products.length;
+  const stock = products.filter(p => p.price !== null).length;
+  document.getElementById("statAll").textContent = all;
+  document.getElementById("statStock").textContent = stock;
+  document.getElementById("statSold").textContent = all - stock;
+}
+
+function render(){
+  const arr = getFiltered();
+  document.getElementById("resultCount").textContent = arr.length;
+  const list = document.getElementById("list");
+
+  if(arr.length === 0){
+    list.innerHTML = `
+      <div class="empty">
+        <span class="mark">無</span>
+        <div class="msg">「${escapeHtml(state.q)}」に該当する商品はありません</div>
+        <div class="sub">別のキーワードでお試しください</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  arr.forEach((p, i) => {
+    const li = document.createElement("li");
+    li.className = "item";
+    const priceHtml = p.price === null
+      ? `<span class="price sold">sold out</span>`
+      : `<span class="price">${yen(p.price)}</span>`;
+    const linkBtns = p.url
+      ? `<button class="iconbtn copyLink" data-url="${p.url}">リンク</button>
+         <a class="iconbtn" href="${p.url}" target="_blank" rel="noopener">開く</a>`
+      : "";
+    li.innerHTML = `
+      <div class="idx">${String(i+1).padStart(2,"0")}</div>
+      <div class="body">
+        <div class="name">${escapeHtml(p.name)}</div>
+        <div class="meta">${priceHtml}<span class="pg">P${p.page}</span></div>
+      </div>
+      <div class="actions">${linkBtns}</div>`;
+    list.appendChild(li);
+  });
+
+  list.querySelectorAll(".copyLink").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await copyText(btn.dataset.url);
+      btn.classList.add("copied"); btn.textContent = "済";
+      setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "リンク"; }, 1200);
+    });
+  });
+}
+
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    let ok=false; try{ ok = document.execCommand("copy"); }catch(_){}
+    document.body.removeChild(ta); return ok;
+  }
+}
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function buildCopyText(arr, fmt){
+  return arr.map(p => fmt === "name" ? p.name : `${p.name} ${priceLabel(p)}`).join("\n");
+}
+
+document.getElementById("copyAllBtn").addEventListener("click", async () => {
+  const arr = getFiltered();
+  if(arr.length === 0){ showToast("コピーする商品がありません"); return; }
+  const fmt = document.getElementById("copyFormat").value;
+  const ok = await copyText(buildCopyText(arr, fmt));
+  showToast(ok ? `${arr.length}点をコピーしました` : "コピーに失敗しました");
+});
+
+const searchEl = document.getElementById("search");
+searchEl.addEventListener("input", e => { state.q = e.target.value; render(); });
+document.getElementById("clearSearch").addEventListener("click", () => {
+  searchEl.value = ""; state.q = ""; render(); searchEl.focus();
+});
+document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+    chip.classList.add("on"); state.avail = chip.dataset.avail; render();
+  });
+});
+
+function parsePaste(text, page){
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const priceRe = /^¥[\d,]+$/;
+  const soldRe = /SOLD\s*OUT/i;
+  const items = []; let buf = [];
+  for(const line of lines){
+    const hasPrice = priceRe.test(line);
+    const hasSold = soldRe.test(line);
+    if(hasPrice || hasSold){
+      let name = buf.join(" ").replace(/\s+/g," ").trim();
+      if(!name){ name = line.replace(/¥[\d,]+/,"").replace(/SOLD\s*OUT/i,"").replace(/\bnew\b/i,"").trim(); }
+      if(name){
+        const priceMatch = line.match(/¥([\d,]+)/);
+        items.push({ name, price: hasSold ? null : (priceMatch ? parseInt(priceMatch[1].replace(/,/g,"")) : null), url:null, page });
+      }
+      buf = [];
+    } else if(line.length < 60 && !/^\d+$/.test(line)){ buf.push(line); }
+  }
+  return items;
+}
+
+document.getElementById("importBtn").addEventListener("click", async () => {
+  const text = document.getElementById("pasteArea").value;
+  const page = parseInt(document.getElementById("pastePage").value) || 1;
+  const st = document.getElementById("importStatus");
+  if(!text.trim()){ st.innerHTML = `<div class="status err">貼り付け欄が空です。</div>`; return; }
+  const items = parsePaste(text, page);
+  if(items.length === 0){ st.innerHTML = `<div class="status err">商品を認識できませんでした(価格またはsold outを含む行が必要です)。</div>`; return; }
+  products = products.filter(p => p.page !== page).concat(items);
+  await saveOverride(); renderStats(); render();
+  st.innerHTML = `<div class="status ok">page ${page} を ${items.length} 点で更新しました。</div>`;
+});
+
+document.getElementById("restoreBtn").addEventListener("click", async () => {
+  products = BASE_DATA.slice(); await clearOverride(); renderStats(); render();
+  document.getElementById("importStatus").innerHTML = `<div class="status info">内蔵データに戻しました(${products.length}点)。</div>`;
+});
+
+(async function init(){
+  document.getElementById("snapshot").textContent = "データ取得時点:" + SNAPSHOT_DATE + "(全" + BASE_DATA.length + "点)";
+  await loadOverride(); renderStats(); render();
+})();
+</script>
+</body>
+</html>
